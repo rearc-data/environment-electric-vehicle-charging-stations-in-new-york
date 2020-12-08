@@ -1,0 +1,1 @@
+The Electric Vehicle Charging Stations in New York dataset includes data for Electric Vehicle Charging Stations in the New York state. The data is provided by the New York State Energy Research and Development Authority ([NYSERDA](https://nyserda.ny.gov)) through the [Open Data NY](https://data.ny.gov) portal. The update frequency is daily.
