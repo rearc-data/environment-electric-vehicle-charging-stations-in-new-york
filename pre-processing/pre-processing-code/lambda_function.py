@@ -65,7 +65,27 @@ def start_change_set(describe_entity_response, revision_arn):
 	]
 
 	response = marketplace.start_change_set(
-		Catalog='AWSMarketplace', ChangeSet=change_set)
+	Catalog='AWSMarketplace', ChangeSet=change_set)
+
+	CHANGE_SET_RETRIES = 5
+	i = 0
+	while i < CHANGE_SET_RETRIES:
+		time.sleep(1)
+		change_set_id = response['ChangeSetId']
+		
+		describe_change_set = marketplace.describe_change_set(
+				Catalog='AWSMarketplace', ChangeSetId=change_set_id)
+		
+		describe_change_set_status = describe_change_set['Status']
+		
+		if describe_change_set_status == 'SUCCEEDED':
+				break 
+		
+		if describe_change_set_status == 'FAILED' and i >= CHANGE_SET_RETRIES:
+				raise Exception("#{}\n#{}".format(describe_change_set["failure_description"], describe_change_set["change_set"]["first"]["error_detail_list"].join()))
+			
+		i += 1
+		
 	return response
 
 
@@ -151,23 +171,26 @@ def lambda_handler(event, context):
 		revision_state = update_revision_response['Finalized']
 
 		if revision_state == True:
-			# Call AWSMarketplace Catalog's APIs to add revisions
-			describe_entity_response = marketplace.describe_entity(
-				Catalog='AWSMarketplace', EntityId=product_id)
-			start_change_set_response = start_change_set(
-				describe_entity_response, revision_arn)
-			if start_change_set_response['ChangeSetId']:
-				print('Revision updated successfully and added to the dataset')
-				return {
-					'statusCode': 200,
-					'body': json.dumps('Revision updated successfully and added to the dataset')
-				}
+			if product_id and product_id != 'blank':
+				# Call AWSMarketplace Catalog's APIs to add revisions
+				describe_entity_response = marketplace.describe_entity(
+					Catalog='AWSMarketplace', EntityId=product_id)
+				start_change_set_response = start_change_set(
+					describe_entity_response, revision_arn)
+				if start_change_set_response['ChangeSetId']:
+					print('Revision updated successfully and added to the dataset')
+					return {
+						'statusCode': 200,
+						'body': json.dumps('Revision updated successfully and added to the dataset')
+					}
+				else:
+					print('Something went wrong with AWSMarketplace Catalog API')
+					return {
+						'statusCode': 500,
+						'body': json.dumps('Something went wrong with AWSMarketplace Catalog API')
+					}
 			else:
-				print('Something went wrong with AWSMarketplace Catalog API')
-				return {
-					'statusCode': 500,
-					'body': json.dumps('Something went wrong with AWSMarketplace Catalog API')
-				}
+				print('Initial dataset revision Created.')
 		else:
 			print('Revision did not complete successfully')
 			return {

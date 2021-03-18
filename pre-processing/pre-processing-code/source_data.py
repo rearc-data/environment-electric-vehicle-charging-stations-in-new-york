@@ -9,7 +9,7 @@ from boto3.s3.transfer import TransferConfig
 from io import BytesIO
 
 def source_dataset():
-    source_dataset_url = "https://data.ny.gov/resource/7rrd-248n.csv"
+    source_dataset_url = "https://data.ny.gov/api/views/7rrd-248n/rows.csv?accessType=DOWNLOAD&sorting=true"
     
     response = None
     retries = 5
